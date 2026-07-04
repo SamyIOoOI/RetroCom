@@ -1,2 +1,2 @@
-# HackerCom
-A 8088 MCPU Controlled 2 way (upgradeable) Intercom device with an old nokia display LCD
+# RetroCom
+A multiple channel one-to-one two-way INTERCOM built around the AT89C52-PI24 RetroMCU (8051 Core).
