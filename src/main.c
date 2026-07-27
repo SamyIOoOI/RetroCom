@@ -136,6 +136,30 @@ void Radio_Write(unsigned char dat){
     RADIO_SDIO = 1; RADIO_SCLK = 1; I2C_Delay();
     RADIO_SCLK = 0; I2C_Delay();
 }
+void LCD_Nibble(unsigned char nibble, unsigned char iscontrol) {
+    unsigned char data_value = (nibble & 0x0F) | (iscontrol ? 0x01 : 0x00) | 0x08;
+    LCD_START();
+    LCD_Write(I2C_DISPLAY_ADDR);
+    LCD_Write(data_value | 0x04);
+    I2C_Delay();
+    LCD_Write(data_value & ~0x04);
+    LCD_STOP();
+}
+void LCD_Send(unsigned char value, unsigned char iscontrol) {
+    LCD_Nibble((value & 0xF0), iscontrol);
+    LCD_Nibble((value << 4) & 0xF0, iscontrol);
+}
+void LCD_CMD(unsigned char cmd){
+    LCD_Send(cmd, 0);
+}
+void LCD_Letter(unsigned char letter){
+    LCD_Send(letter, 1);
+}
+void LCD_Sentence(unsigned char *sentence){
+    while(*sentence){
+        LCD_Letter(*sentence++);
+    }
+}
 void main(void)
 {
     unsigned long x = 0;
