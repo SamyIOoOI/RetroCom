@@ -30,7 +30,19 @@ sbit TX_PIN = P3^1;
 #define I2C_DISPLAY_ADDR 0x4E /*I gotta change this based on my I2C Address*/
 #define I2C_RADIO_ADDR 0X40 /*I gotta change this based on my I2C Address*/
 
+#define ST_IDLE 0
+#define ST_RINGING 1
+#define ST_CALLING 2 
+#define ST_ACCEPTED 3
+#define ST_HANGUP 4
+#define ST_BUSY 5
+
+volatile unsigned char station_state = ST_IDLE;
+
+
 volatile unsigned int timer = 0;
+volatile unsigned int selected_station = 0;
+
 bit Is_Call_Active = 0;
 
 void Timer0_ISR(void) interrupt 1
@@ -145,6 +157,23 @@ void LCD_Nibble(unsigned char nibble, unsigned char iscontrol) {
     LCD_Write(data_value & ~0x04);
     LCD_STOP();
 }
+void radio_registery(unsigned char upper, unsigned char lower){
+    RADIO_Start();
+    Radio_Write(I2C_RADIO_ADDR);
+    Radio_Write(upper);
+    Radio_Write(lower);
+    Radio_Stop();
+}
+void cursor(unsigned char row, unsigned char col){
+    unsigned char position;
+    if (row == 1) {
+        position = 0x80 + (col - 1);
+    }
+    else {
+        position = 0xC0 + (col - 1);
+    }
+    LCD_CMD(position);
+}
 void LCD_Send(unsigned char value, unsigned char iscontrol) {
     LCD_Nibble((value & 0xF0), iscontrol);
     LCD_Nibble((value << 4) & 0xF0, iscontrol);
@@ -159,6 +188,58 @@ void LCD_Sentence(unsigned char *sentence){
     while(*sentence){
         LCD_Letter(*sentence++);
     }
+}
+void Init_Display(void){
+    cursor(1, 3);
+    LCD_Sentence("=RetroCom=");
+    cursor(2, 1);
+    LCD_Sentence("St:0 Radio:OFF");
+    LCD_CMD(0x0F);
+    cursor(2, 1);
+}
+void Radio_Process(unsigned char r2_high, unsigned char r2_low, unsigned char r3_high, unsigned char r3_low){
+    Radio_Start();
+    Radio_Write(I2C_RADIO_ADDR);
+    Radio_Write(r2_high);
+    Radio_Write(r2_low);
+    Radio_Write(r3_high);
+    Radio_Write(r3_low);
+    Radio_Stop();
+}
+void Set_Radio(unsigned char mode){ /* Registered Radio Stations (I can expand this later) */
+    if (mode == 0){
+        Radio_Process(0x00, 0x00, 0x00, 0x00);
+        cursor(2, 6);
+        LCD_Sentence("Radio:OFF");
+    }
+    else if (mode == 1){
+        Radio_Process(0xC0, 0X0F, 0X1C, 0X10);
+        cursor(2, 6);
+        LCD_Sentence("Radio:QUR");
+    }
+    else if (mode == 2){
+        Radio_Process(0xC0, 0X0F, 0X22, 0X10);
+        cursor(2, 6);
+        LCD_Sentence("Radio:FM ")
+    }
+}
+void Call_Active_Status(unsigned char number){
+    Is_Call_Active = 1;
+    LCD_CMD(0x0C);
+    cursor(2, 1);
+    if (number == 1) {
+        LCD_Sentence("Call Active: 1  ");
+    }
+    else if (number == 2) {
+        LCD_Sentence("Call Active: 2  ");
+    }
+    else if (number == 3) {
+        LCD_Sentence("Call Active: 3  ");
+    }
+    else if (number == 4) {
+        LCD_Sentence("Call Active: 4  ");
+    }
+    GREEN_LED = 1;
 }
 void main(void)
 {
@@ -175,6 +256,7 @@ void main(void)
     bit current_state_radio_btn2 = 1;
 
     Init_System();
+    Init_Display();
 
     while(1) {
         if ((timer - x) >= 20) {
@@ -190,23 +272,31 @@ void main(void)
             else if (SPK_SWITCH_STATUS == 1) {
                 ORANGE_LED = 0;
             }
-            if current_state_scroll_btn == 0 && last_state_scroll_btn == 1 {
+            if (current_state_scroll_btn == 0 && last_state_scroll_btn == 1) {
                 /* Scroll Button Function */
             }
             last_state_scroll_btn = current_state_scroll_btn;
-            if current_state_call_btn == 0 && last_state_call_btn == 1 {
-                /* Call Button Function */
+            if (current_state_call_btn == 0 && last_state_call_btn == 1) {
+                if (station_state == ST_RINGING) {
+                    station_state = ST_ACCEPTED;
+                    BUZZER = 0;
+                }
+                /*Call Button Function */
             }
             last_state_call_btn = current_state_call_btn;
-            if current_state_hang_btn == 0 && last_state_hang_btn == 1 {
+            if (current_state_hang_btn == 0 && last_state_hang_btn == 1) {
+                if (station_state == ST_RINGING){
+                    station_state = ST_HANGUP;
+                    BUZZER = 0;
+                } 
                 /* Hang Button Function */
             }
             last_state_hang_btn = current_state_hang_btn;
-            if current_state_radio_btn1 == 0 && last_state_radio_btn1 == 1 {
+            if (current_state_radio_btn1 == 0 && last_state_radio_btn1 == 1) {
                 /* Radio Button 1 Function */
             }
             last_state_radio_btn1 = current_state_radio_btn1;
-            if current_state_radio_btn2 == 0 && last_state_radio_btn2 == 1 {
+            if (current_state_radio_btn2 == 0 && last_state_radio_btn2 == 1) {
                 /* Radio Button 2 Function */
             }
             last_state_radio_btn2 = current_state_radio_btn2;
