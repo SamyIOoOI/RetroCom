@@ -26,10 +26,13 @@ sbit SPK_SWITCH_STATUS = P2^6;
 sbit ORANGE_LED = P2^7;
 sbit RX_PIN = P3^0;
 sbit TX_PIN = P3^1;
+sbit ST_CD_A = P3^2;
+sbit ST_CD_B = P3^3;
+
+
 
 #define I2C_DISPLAY_ADDR 0x4E /*I gotta change this based on my I2C Address*/
-#define I2C_RADIO_ADDR 0X40 /*I gotta change this based on my I2C Address*/
-
+#define I2C_RADIO_ADDR 0x40 /*I gotta change this based on my I2C Address*/
 #define ST_IDLE 0
 #define ST_RINGING 1
 #define ST_CALLING 2 
@@ -38,28 +41,250 @@ sbit TX_PIN = P3^1;
 #define ST_BUSY 5
 
 volatile unsigned char station_state = ST_IDLE;
-
-
 volatile unsigned int timer = 0;
+volatile unsigned char poll = 0x00;
 volatile unsigned int selected_station = 0;
+volatile unsigned char recieved_message = 0;
 
-bit Is_Call_Active = 0;
+bit call_button_pressed = 0;
+bit Is_Speaker_On = 1;
 
+/* Master Station Section (The state of all stations is stored here) */
+
+bit station1_busy = 0;
+bit station2_busy = 0;
+bit station3_busy = 0;
+bit station4_busy = 0;
+
+unsigned char station1_calltrgt = 0;
+unsigned char station2_calltrgt = 0;
+unsigned char station3_calltrgt = 0;
+unsigned char station4_calltrgt = 0;
+
+unsigned char station1_calling = 0;
+unsigned char station2_calling = 0;
+unsigned char station3_calling = 0;
+unsigned char station4_calling = 0;
+
+bit station1_on = Is_Speaker_On;
+bit station2_on = 1;
+bit station3_on = 1;
+bit station4_on = 1;
+
+bit station1_rcall = 0;
+bit station2_rcall = 0;
+bit station3_rcall = 0;
+bit station4_rcall = 0;
+
+bit end_call_recieved1 = 0;
+bit end_call_recieved2 = 0;
+bit end_call_recieved3 = 0;
+bit end_call_recieved4 = 0;
+
+bit station1_decline = 0;
+bit station2_decline = 0;
+bit station3_decline = 0;
+bit station4_decline = 0;
+
+bit station1_trgtbusy = 0;
+bit station2_trgtbusy = 0;
+bit station3_trgtbusy = 0;
+bit station4_trgtbusy = 0;
+
+/*///*/
+
+unsigned char currently_polling = 2;
+
+void unpacker(void){
+    if (currently_polling == 2){
+        station2_on = (recieved_message & 0x01);
+        station2_rcall = (recieved_message >> 1) & 0x01;
+        station2_calltrgt = (recieved_message >> 2) & 0x03;
+        end_call_recieved2 = (recieved_message >> 4) & 0x01;
+        station2_busy = (recieved_message >> 5) & 0x01;
+        station2_decline = (recieved_message >> 6) & 0x01;
+        station2_trgtbusy = (recieved_message >> 7) &0x01;
+    }
+    if (currently_polling == 3){
+        station3_on = (recieved_message & 0x01);
+        station3_rcall = (recieved_message >> 1) & 0x01;
+        station3_calltrgt = (recieved_message >> 2) & 0x03;
+        end_call_recieved3 = (recieved_message >> 4) & 0x01;
+        station3_busy = (recieved_message >> 5) & 0x01;
+        station3_decline = (recieved_message >> 6) & 0x01;
+        station3_trgtbusy = (recieved_message >> 7) & 0x01;
+    }
+    if (currently_polling == 4){
+        station4_on = (recieved_message & 0x01);
+        station4_rcall = (recieved_message >> 1) & 0x01;
+        station4_calltrgt = (recieved_message >> 2) & 0x03;
+        end_call_recieved4 = (recieved_message >> 4) & 0x01;
+        station4_busy = (recieved_message >> 5) & 0x01;
+        station4_decline = (recieved_message >> 6) & 0x01;
+        station4_trgtbusy = (recieved_message >> 7) & 0x01;
+    }
+}
+void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char trgt_busy){
+    poll =      
+     (Is_Speaker_On & 0x01) | /* (this is the station's on/off flag) */
+      ((call & 0x01) << 1) | /* whether I want to call the polled station or not */
+       ((call_target & 0x03) << 2) | /* If I do wanna call, who? */
+        ((end_call & 0x01) << 4) | /* Gives the polled station a hangup order */
+        ((busy & 0x01) << 5)  | /* The Station's busy flag */
+        ((decline & 0x01) << 6) | 
+        ((trgt_busy & 0x01) << 7)
+}
+void checker(void){
+
+}
+void Poller(void){
+    unsigned char call_1 = 0; 
+    unsigned char call_target_1 = 0;
+    unsigned char end_call_1 = 0;
+    unsigned char busy_1 = 0;
+    unsigned char decline_1 = 0;
+    unsigned char target_busy_1 = 0;
+    if (currently_polling == 2) {
+        select_station_poll(2);
+        if (station2_rcall){
+            if (station2_calltrgt == 3) {
+                if (station3_busy) {
+                    target_busy_1 = 1;
+                }
+                if (station3_decline) {
+                    decline_1 = 1;
+                    station3_decline = 0;
+                }
+            
+            }
+            if (station2_calltrgt == 4){
+                if (station4_busy) {
+                    target_busy_1 = 1;
+                }
+                if (station4_decline) {
+                    decline_1 = 1;
+                    station4_decline = 0;
+                }
+            }
+            if (station2_calltrgt == 1) {
+                if (station1_busy) {
+                    target_busy_1 = 1;
+                }
+                if (station1_decline) {
+                    decline_1 = 1;
+                    station1_decline = 0;
+                }
+            }
+        }
+        if (station3_calltrgt == 2 && station3_rcall) {
+            call_1 = 1;
+            call_target_1 = 3;
+        }
+        else if (station4_calltrgt == 2 && station4_rcall) {
+            call_1 = 1;
+            call_target_1 = 4;
+        }
+        else if (station1_calltrgt == 2 && station1_rcall) {
+            call_1 = 1;
+            call_target_1 = 1; 
+        }
+        if (station2_calling == 1 && end_call_recieved1){
+            end_call_recieved1 = 0;
+            station2_calling = 0;
+            station1_calling = 0;
+            station1_busy = 0;
+            end_call_1 = 1;
+            station1_calltrgt = 0;
+            station1_rcall = 0;
+            station2_busy = 0;
+        }
+        if (station2_calling == 3 && end_call_recieved3){
+            end_call_recieved3 = 0;
+            station3_calling = 0;
+            station2_calling = 0;
+            station3_busy = 0;
+            end_call_1 = 1;
+            station3_calltrgt = 0;
+            station3_rcall = 0;
+            station2_busy = 0;
+        }
+        if (station2_calling == 4 && end_call_recieved4){
+            end_call_recieved4 = 0;
+            station4_calling = 0;
+            station2_calling = 0;
+            station4_busy = 0;
+            end_call_1 = 1;
+            station4_calltrgt = 0;
+            station4_rcall = 0;
+            station2_busy = 0;
+        }
+    }
+    busy_1 = station1_busy;
+    pack_poll_byte(call_1, call_target_1, end_call_1, busy_1, decline_1, target_busy_1);
+}
+void end_call(unsigned char target){
+    return; /*end call function*/
+}
+void select_station_poll(unsigned char station){
+    if(station == 2) {
+        ST_CD_A = 0;
+        ST_CD_B = 0;
+        currently_polling = 2;
+    }
+    else if (station == 3){
+        ST_CD_A = 0;
+        ST_CD_B = 1;
+        currently_polling = 3;
+    }
+    else if (station == 4){
+        ST_CD_A = 1;
+        ST_CD_B = 0;
+        currently_polling = 4;
+    }
+}
+void UART_Send(unsigned char data){
+    SBUF = data;
+    while (!TI);
+    TI = 0;
+}
+void UART_Read(unsigned int timeout_limit){
+    unsigned int timer_count = 0;
+    while (!RI){
+        timer_count++;
+        if (timer_count >= timeout_limit){
+            return;
+        }
+
+    }
+    RI = 0;
+    recieved_message = SBUF;
+}
+void Init_UART(void){
+    TMOD &= 0x0F;
+    TMOD |= 0x20;
+    TH1 = 0xFD;
+    TL1 = 0xFD;
+    TR1 = 1;
+    SCON = 0x50;
+    TI = 0;
+    RI = 0;
+}
 void Timer0_ISR(void) interrupt 1
 {
-    TH0 = 0XFC;
-    TL0 = 0X66;
+    TH0 = 0xFC;
+    TL0 = 0x66;
     
     timer++;
 }
 void Init_System(void){
     TMOD &= 0xF0;
-    TMOD |= 0X01;
+    TMOD |= 0x01;
 
-    TH0 = 0XFC;
-    TL0 = 0X66;
+    TH0 = 0xFC;
+    TL0 = 0x66;
 
     ET0 = 1;
+    ET1 = 0;
     EA = 1;
     TR0 = 1;
 
@@ -76,6 +301,8 @@ void Init_System(void){
     RADIO_BTN2 = 1;
     SCROLL_BTN = 1;
     HANG_BTN = 1;
+    ST_CD_A = 0;
+    ST_CD_B = 0;
 }
 void LISTEN_STATION2(void){ /* Listens to port 1 */
     CDBUS1 = 0;
@@ -224,7 +451,7 @@ void Set_Radio(unsigned char mode){ /* Registered Radio Stations (I can expand t
     }
 }
 void Call_Active_Status(unsigned char number){
-    Is_Call_Active = 1;
+    station1_busy = 1;
     LCD_CMD(0x0C);
     cursor(2, 1);
     if (number == 1) {
@@ -243,7 +470,8 @@ void Call_Active_Status(unsigned char number){
 }
 void main(void)
 {
-    unsigned long x = 0;
+    unsigned int x = 0;
+    unsigned int y = 0;
     bit last_state_scroll_btn = 1;
     bit last_state_call_btn = 1;
     bit last_state_hang_btn = 1;
@@ -256,6 +484,7 @@ void main(void)
     bit current_state_radio_btn2 = 1;
 
     Init_System();
+    Init_UART();
     Init_Display();
 
     while(1) {
@@ -268,15 +497,18 @@ void main(void)
             current_state_radio_btn2 = RADIO_BTN2;
             if (SPK_SWITCH_STATUS == 0) {
                 ORANGE_LED = 1;
+                Is_Speaker_On = 1;
             }
             else if (SPK_SWITCH_STATUS == 1) {
                 ORANGE_LED = 0;
+                Is_Speaker_On = 0;
             }
             if (current_state_scroll_btn == 0 && last_state_scroll_btn == 1) {
                 /* Scroll Button Function */
             }
             last_state_scroll_btn = current_state_scroll_btn;
             if (current_state_call_btn == 0 && last_state_call_btn == 1) {
+                call_button_pressed = 1;
                 if (station_state == ST_RINGING) {
                     station_state = ST_ACCEPTED;
                     BUZZER = 0;
@@ -289,6 +521,9 @@ void main(void)
                     station_state = ST_HANGUP;
                     BUZZER = 0;
                 } 
+            else if (station_state == ST_CALLING){
+                station_state = ST_IDLE;
+            }
                 /* Hang Button Function */
             }
             last_state_hang_btn = current_state_hang_btn;
@@ -300,6 +535,9 @@ void main(void)
                 /* Radio Button 2 Function */
             }
             last_state_radio_btn2 = current_state_radio_btn2;
+        }
+        if ((timer - y) >= 200){
+            y = timer;
         }
     }
 }
