@@ -750,7 +750,7 @@ void endcall(void){
     LISTEN_NONE();
     cursor(2, 1);
     LCD_Sentence("HANG");
-    busy_display_clock = timer;
+    Busy_Display_Clock = timer;
     Is_Display_Busy = 1;
 }
 void main(void)
@@ -886,7 +886,7 @@ void main(void)
                         cursor(2, 4);
                         LCD_Sentence("2");
                     }
-                    if (selected_station == 2){
+                    else if (selected_station == 2){
                         selected_station = 3;
                         cursor(2, 4);
                         LCD_Sentence("3");
@@ -935,7 +935,6 @@ void main(void)
                     GREEN_LED = 0;
                     LISTEN_NONE();
                     endcall();
-                    end_call_recieved1 = 1;
                 }
             }
             last_state_hang_btn = current_state_hang_btn;
