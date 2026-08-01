@@ -65,6 +65,8 @@ void LISTEN_STATION3(void);
 void LISTEN_STATION4(void);
 void LISTEN_RADIO(void);
 void LISTEN_NONE(void);
+void calldisplay(void);
+void endcall(void);
 
 volatile unsigned char timer = 0;
 volatile unsigned char poll = 0x00;
@@ -73,7 +75,9 @@ volatile unsigned char recieved_message = 0;
 
 bit Is_Speaker_On = 1;
 bit selected_mode = 0;
+bit Is_Display_Busy = 0;
 unsigned char selected_radio_station = 0;
+unsigned char Busy_Display_Clock = 0;
 
 /* Master Station Section (The state of all stations is stored here) */
 
@@ -122,6 +126,7 @@ bit send_accept_station1 = 0;
 bit send_accept_station2 = 0;
 bit send_accept_station3 = 0;
 bit send_accept_station4 = 0;
+
 
 /*///*/
 unsigned char currently_polling = 2;
@@ -729,6 +734,25 @@ void Init_Display(void){
     LCD_CMD(0x0E);
     cursor(2, 1);
 }
+void calldisplay(void){
+    cursor(2, 1);
+    if (selected_station == 2){
+        LCD_Sentence("CAL1");
+    }
+    else if (selected_station == 3){
+        LCD_Sentence("CAL2");
+    }
+    else if (selected_station == 4){
+        LCD_Sentence("CAL3");
+    }
+}
+void endcall(void){
+    LISTEN_NONE();
+    cursor(2, 1);
+    LCD_Sentence("HANG");
+    busy_display_clock = timer;
+    Is_Display_Busy = 1;
+}
 void main(void)
 {
     unsigned char x = 0;
@@ -765,8 +789,103 @@ void main(void)
                 ORANGE_LED = 0;
                 Is_Speaker_On = 0;
             }
+            if (Is_Display_Busy){
+                if ((unsigned char)(timer - busy_display_clock) >= 75){
+                    Is_Display_Busy = 0;
+                    cursor(2, 1);
+                    LCD_Sentence("St:0");
+                    selected_station = 0;
+                }
+            }
+            if (station1_calltrgt) {
+                if (station1_calltrgt == 2){
+                    if (station2_accept){
+                        station1_calling = 2;
+                        station2_calling = 1;
+                        station1_busy = 1;
+                        station1_calltrgt = 0;
+                        YELLOW_LED = 0;
+                        GREEN_LED = 1;
+                        LISTEN_STATION2();
+                    }
+                    else if (station2_decline){
+                        station1_calltrgt = 0;
+                        station2_decline = 0;
+                        YELLOW_LED = 0;
+                        endcall();
+                    }
+                }
+                else if (station1_calltrgt == 3){
+                    if (station3_accept){
+                        station1_calling = 3;
+                        station3_calling = 1;
+                        station1_busy = 1;
+                        station1_calltrgt = 0;
+                        YELLOW_LED = 0;
+                        GREEN_LED = 1;
+                        LISTEN_STATION3();
+                    }
+                    else if (station3_decline){
+                        station1_calltrgt = 0;
+                        station3_decline = 0;
+                        YELLOW_LED = 0;
+                        endcall();
+                    }
+                }
+                else if (station1_calltrgt == 4){
+                    if (station4_accept){
+                        station1_calling = 4;
+                        station4_calling = 1;
+                        station1_busy = 1;
+                        station1_calltrgt = 0;
+                        YELLOW_LED = 0;
+                        GREEN_LED = 1;
+                        LISTEN_STATION4();
+                    }
+                    else if (station4_decline){
+                        station1_calltrgt = 0;
+                        station4_decline = 0;
+                        YELLOW_LED = 0;
+                        endcall();
+                    }
+                }
+            }
+            if (station1_calling){
+                if (station1_calling == 2){
+                    if (end_call_recieved2){
+                        end_call_recieved2 = 0;
+                        station1_calling = 0;
+                        station2_calling = 0;
+                        station1_busy = 0;
+                        endcall();
+                    }
+                }
+                else if (station1_calling == 3){
+                    if (end_call_recieved3){
+                        end_call_recieved3 = 0;
+                        station1_calling = 0;
+                        station3_calling = 0;
+                        station1_busy = 0;
+                        endcall();
+                    }
+                }
+                else if (station1_calling == 4){
+                    if (end_call_recieved4){
+                        end_call_recieved4 = 0;
+                        station1_calling = 0;
+                        station4_calling = 0;
+                        station1_busy = 0;
+                        endcall();
+                    }
+                }
+            }
             if (current_state_scroll_btn == 0 && last_state_scroll_btn == 1) {
                 if (selected_mode == 0) {
+                    if (selected_station == 0){
+                        selected_station = 2;
+                        cursor(2, 4);
+                        LCD_Sentence("2");
+                    }
                     if (selected_station == 2){
                         selected_station = 3;
                         cursor(2, 4);
@@ -799,7 +918,10 @@ void main(void)
             last_state_scroll_btn = current_state_scroll_btn;
             if (current_state_call_btn == 0 && last_state_call_btn == 1) {
                 if (!station1_busy){
-                    
+                    station1_rcall = 1;
+                    station1_calltrgt = selected_station;
+                    YELLOW_LED = 1;
+                    calldisplay();
                 }
             }
             last_state_call_btn = current_state_call_btn;
@@ -812,6 +934,7 @@ void main(void)
                     station1_rcall = 0;
                     GREEN_LED = 0;
                     LISTEN_NONE();
+                    endcall();
                     end_call_recieved1 = 1;
                 }
             }
@@ -840,8 +963,6 @@ void main(void)
                 }
             }
             last_state_radio_btn2 = current_state_radio_btn2;
-
-            /*        // Local Checker //               */
         }
         if ((unsigned char)(timer - y) >= 50){
             y = timer;
