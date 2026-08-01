@@ -33,12 +33,7 @@ sbit ST_CD_B = P3^3;
 
 #define I2C_DISPLAY_ADDR 0x4E /*I gotta change this based on my I2C Address*/
 #define I2C_RADIO_ADDR 0x40 /*I gotta change this based on my I2C Address*/
-#define ST_IDLE 0
-#define ST_RINGING 1
-#define ST_CALLING 2 
-#define ST_ACCEPTED 3
-#define ST_HANGUP 4
-#define ST_BUSY 5
+
 
 void I2C_Delay(void);
 void LCD_START(void);
@@ -60,27 +55,25 @@ void select_station_poll(unsigned char station);
 void Poller(void);
 void unpacker(void);
 void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char trgt_busy);
-void end_call(unsigned char target);
 void UART_Send(unsigned char data);
-unsigned char UART_Read(unsigned int timeout_limit);
+unsigned char UART_Read(unsigned char timeout_limit);
 void Init_UART(void);
 void Init_System(void);
 void Init_Display(void);
-void Call_Active_Status(unsigned char number);
 void LISTEN_STATION2(void);
 void LISTEN_STATION3(void);
 void LISTEN_STATION4(void);
 void LISTEN_RADIO(void);
 void LISTEN_NONE(void);
 
-volatile unsigned char station_state = ST_IDLE;
 volatile unsigned char timer = 0;
 volatile unsigned char poll = 0x00;
-volatile unsigned char selected_station = 0;
+volatile unsigned char selected_station = 2;
 volatile unsigned char recieved_message = 0;
 
-bit call_button_pressed = 0;
 bit Is_Speaker_On = 1;
+bit selected_mode = 0;
+unsigned char selected_radio_station = 0;
 
 /* Master Station Section (The state of all stations is stored here) */
 
@@ -88,6 +81,7 @@ bit station1_busy = 0;
 bit station2_busy = 0;
 bit station3_busy = 0;
 bit station4_busy = 0;
+bit radio_on = 0;
 
 unsigned char station1_calltrgt = 0;
 unsigned char station2_calltrgt = 0;
@@ -120,11 +114,14 @@ bit station3_decline = 0;
 bit station4_decline = 0;
 
 bit station1_trgtbusy = 0;
-bit station2_trgtbusy = 0;
-bit station3_trgtbusy = 0;
-bit station4_trgtbusy = 0;
+bit station2_accept = 0;
+bit station3_accept = 0;
+bit station4_accept = 0;
 
-
+bit send_accept_station1 = 0;
+bit send_accept_station2 = 0;
+bit send_accept_station3 = 0;
+bit send_accept_station4 = 0;
 
 /*///*/
 unsigned char currently_polling = 2;
@@ -179,13 +176,13 @@ void Poller(void){
     unsigned char end_call_1 = 0;
     unsigned char busy_1 = 0;
     unsigned char decline_1 = 0;
-    unsigned char target_busy_1 = 0;
+    unsigned char accept_1 = 0;
     if (currently_polling == 2) {
         select_station_poll(2);
         if (station2_rcall){
             if (station2_calltrgt == 3) {
                 if (station3_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station3_decline) {
                     decline_1 = 1;
@@ -195,7 +192,7 @@ void Poller(void){
             }
             if (station2_calltrgt == 4){
                 if (station4_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station4_decline) {
                     decline_1 = 1;
@@ -204,7 +201,7 @@ void Poller(void){
             }
             if (station2_calltrgt == 1) {
                 if (station1_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station1_decline) {
                     decline_1 = 1;
@@ -254,13 +251,38 @@ void Poller(void){
             station4_rcall = 0;
             station2_busy = 0;
         }
+        if (station3_rcall && (station3_calltrgt == 2) && station2_accept){
+            station3_rcall = 0;
+            station3_calling = 2;
+            station2_calling = 3;
+            station3_busy = 1;
+            send_accept_station3 = 1;
+        }
+        else if (station4_rcall && (station4_calltrgt == 2) && station2_accept){
+            station4_rcall = 0;
+            station4_calling = 2;
+            station2_calling = 4;
+            station4_busy = 1;
+            send_accept_station4 = 1;
+        }
+        else if (station1_rcall && (station1_calltrgt == 2) && station2_accept){
+            station1_rcall = 0;
+            station1_calling = 2;
+            station2_calling = 1;
+            station1_busy = 1;
+            send_accept_station1 = 1;
+        }
+        if (send_accept_station2){
+            send_accept_station2 = 0;
+            accept_1 = 1;
+        }
     }
     if (currently_polling == 3) {
         select_station_poll(3);
         if (station3_rcall){
             if (station3_calltrgt == 2) {
                 if (station2_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station2_decline) {
                     decline_1 = 1;
@@ -270,7 +292,7 @@ void Poller(void){
             }
             if (station3_calltrgt == 4){
                 if (station4_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station4_decline) {
                     decline_1 = 1;
@@ -279,7 +301,7 @@ void Poller(void){
             }
             if (station3_calltrgt == 1) {
                 if (station1_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station1_decline) {
                     decline_1 = 1;
@@ -329,13 +351,38 @@ void Poller(void){
             station4_rcall = 0;
             station3_busy = 0;
         }
+        if (station2_rcall && (station2_calltrgt == 3) && station3_accept){
+            station2_rcall = 0;
+            station2_calling = 3;
+            station3_calling = 2;
+            station2_busy = 1;
+            send_accept_station2 = 1;
+        }
+        else if (station4_rcall && (station4_calltrgt == 3) && station3_accept){
+            station4_rcall = 0;
+            station4_calling = 3;
+            station3_calling = 4;
+            station4_busy = 1;
+            send_accept_station4 = 1;
+        }
+        else if (station1_rcall && (station1_calltrgt == 3) && station3_accept){
+            station1_rcall = 0;
+            station1_calling = 3;
+            station3_calling = 1;
+            station1_busy = 1;
+            send_accept_station1 = 1;
+        }
+        if (send_accept_station3){
+            send_accept_station3 = 0;
+            accept_1 = 1;
+        }
     }
     if (currently_polling == 4) {
         select_station_poll(4);
         if (station4_rcall){
             if (station4_calltrgt == 3) {
                 if (station3_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station3_decline) {
                     decline_1 = 1;
@@ -345,7 +392,7 @@ void Poller(void){
             }
             if (station4_calltrgt == 2){
                 if (station2_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station2_decline) {
                     decline_1 = 1;
@@ -354,7 +401,7 @@ void Poller(void){
             }
             if (station4_calltrgt == 1) {
                 if (station1_busy) {
-                    target_busy_1 = 1;
+                    decline_1 = 1;
                 }
                 if (station1_decline) {
                     decline_1 = 1;
@@ -404,9 +451,34 @@ void Poller(void){
             station2_rcall = 0;
             station4_busy = 0;
         }
+        if (station3_rcall && (station3_calltrgt == 4) && station4_accept){
+            station3_rcall = 0;
+            station3_calling = 4;
+            station4_calling = 3;
+            station3_busy = 1;
+            send_accept_station3 = 1;
+        }
+        else if (station2_rcall && (station2_calltrgt == 4) && station4_accept){
+            station2_rcall = 0;
+            station2_calling = 4;
+            station4_calling = 2;
+            station2_busy = 1;
+            send_accept_station2 = 1;
+        }
+        else if (station1_rcall && (station1_calltrgt == 4) && station4_accept){
+            station1_rcall = 0;
+            station1_calling = 4;
+            station4_calling = 1;
+            station1_busy = 1;
+            send_accept_station1 = 1;
+        }
+        if (send_accept_station4){
+            send_accept_station4 = 0;
+            accept_1 = 1;
+        }
     }
     busy_1 = station1_busy;
-    pack_poll_byte(call_1, call_target_1, end_call_1, busy_1, decline_1, target_busy_1);
+    pack_poll_byte(call_1, call_target_1, end_call_1, busy_1, decline_1, accept_1);
     UART_Send(poll);
     if (UART_Read(15)){
         unpacker();
@@ -439,7 +511,7 @@ void unpacker(void){
         end_call_recieved2 = (recieved_message >> 4) & 0x01;
         station2_busy = (recieved_message >> 5) & 0x01;
         station2_decline = (recieved_message >> 6) & 0x01;
-        station2_trgtbusy = (recieved_message >> 7) &0x01;
+        station2_accept = (recieved_message >> 7) &0x01;
     }
     if (currently_polling == 3){
         station3_on = (recieved_message & 0x01);
@@ -448,7 +520,7 @@ void unpacker(void){
         end_call_recieved3 = (recieved_message >> 4) & 0x01;
         station3_busy = (recieved_message >> 5) & 0x01;
         station3_decline = (recieved_message >> 6) & 0x01;
-        station3_trgtbusy = (recieved_message >> 7) & 0x01;
+        station3_accept = (recieved_message >> 7) & 0x01;
     }
     if (currently_polling == 4){
         station4_on = (recieved_message & 0x01);
@@ -457,21 +529,22 @@ void unpacker(void){
         end_call_recieved4 = (recieved_message >> 4) & 0x01;
         station4_busy = (recieved_message >> 5) & 0x01;
         station4_decline = (recieved_message >> 6) & 0x01;
-        station4_trgtbusy = (recieved_message >> 7) & 0x01;
+        station4_accept = (recieved_message >> 7) & 0x01; /* This bit is just a placeholder for incoming traffic. Only Matters for outgoing orders. */
     }
 }
-void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char trgt_busy){
+void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char accept){
+    unsigned char safe_target = 0;
+    if (call_target > 0){
+        safe_target = (call_target - 1) & 0x03;
+    }
     poll =      
      (Is_Speaker_On & 0x01) | /* (this is the station's on/off flag) */
       ((call & 0x01) << 1) | /* whether I want to call the polled station or not */
-       (((call_target - 1) & 0x03) << 2) | /* If I do wanna call, who? */
+       ( safe_target << 2) | /* If I do wanna call, who? */
         ((end_call & 0x01) << 4) | /* Gives the polled station a hangup order */
         ((busy & 0x01) << 5)  | /* The Station's busy flag */
         ((decline & 0x01) << 6) | 
-        ((trgt_busy & 0x01) << 7);
-}
-void end_call(unsigned char target){
-    return; /*end call function*/
+        ((accept & 0x01) << 7);
 }
 void UART_Send(unsigned char data){
     SBUF = data;
@@ -622,15 +695,6 @@ void cursor(unsigned char row, unsigned char col){
     }
     LCD_CMD(position);
 }
-
-void Init_Display(void){
-    cursor(1, 3);
-    LCD_Sentence("=RetroCom=");
-    cursor(2, 1);
-    LCD_Sentence("St:0 Radio:OFF");
-    LCD_CMD(0x0F);
-    cursor(2, 1);
-}
 void Radio_Process(unsigned char r2_high, unsigned char r2_low, unsigned char r3_high, unsigned char r3_low){
     Radio_Start();
     Radio_Write(I2C_RADIO_ADDR);
@@ -657,23 +721,13 @@ void Set_Radio(unsigned char mode){ /* Registered Radio Stations (I can expand t
         LCD_Sentence("Radio:FM ");
     }
 }
-void Call_Active_Status(unsigned char number){
-    station1_busy = 1;
-    LCD_CMD(0x0C);
+void Init_Display(void){
+    cursor(1, 3);
+    LCD_Sentence("=RetroCom=");
     cursor(2, 1);
-    if (number == 1) {
-        LCD_Sentence("Call Active: 1  ");
-    }
-    else if (number == 2) {
-        LCD_Sentence("Call Active: 2  ");
-    }
-    else if (number == 3) {
-        LCD_Sentence("Call Active: 3  ");
-    }
-    else if (number == 4) {
-        LCD_Sentence("Call Active: 4  ");
-    }
-    GREEN_LED = 1;
+    LCD_Sentence("St:0 Radio:OFF");
+    LCD_CMD(0x0E);
+    cursor(2, 1);
 }
 void main(void)
 {
@@ -695,7 +749,7 @@ void main(void)
     Init_Display();
 
     while(1) {
-        if ((timer - x) >= 20) {
+        if ((unsigned char)(timer - x) >= 20) {
             x = timer;
             station1_on = Is_Speaker_On;
             current_state_scroll_btn = SCROLL_BTN;
@@ -712,39 +766,84 @@ void main(void)
                 Is_Speaker_On = 0;
             }
             if (current_state_scroll_btn == 0 && last_state_scroll_btn == 1) {
-                /* Scroll Button Function */
+                if (selected_mode == 0) {
+                    if (selected_station == 2){
+                        selected_station = 3;
+                        cursor(2, 4);
+                        LCD_Sentence("3");
+                    }
+                    else if (selected_station == 3){
+                        selected_station = 4;
+                        cursor(2, 4);
+                        LCD_Sentence("4");
+                    }
+                    else if (selected_station == 4){
+                        selected_station = 2;
+                        cursor(2, 4);
+                        LCD_Sentence("2");
+                    } 
+                }
+                else if (selected_mode == 1){
+                    if (selected_radio_station == 1){
+                        selected_radio_station = 2;
+                        cursor(2, 12);
+                        Set_Radio(2);
+                    }
+                    else if (selected_radio_station == 2){
+                        selected_radio_station = 1;
+                        cursor(2, 12);
+                        Set_Radio(1);
+                    }
+                }
             }
             last_state_scroll_btn = current_state_scroll_btn;
             if (current_state_call_btn == 0 && last_state_call_btn == 1) {
-                call_button_pressed = 1;
-                if (station_state == ST_RINGING) {
-                    station_state = ST_ACCEPTED;
-                    BUZZER = 0;
+                if (!station1_busy){
+                    
                 }
-                /*Call Button Function */
             }
             last_state_call_btn = current_state_call_btn;
             if (current_state_hang_btn == 0 && last_state_hang_btn == 1) {
-                if (station_state == ST_RINGING){
-                    station_state = ST_HANGUP;
-                    BUZZER = 0;
-                } 
-            else if (station_state == ST_CALLING){
-                station_state = ST_IDLE;
-            }
-                /* Hang Button Function */
+                if (station1_busy || station1_calling) {
+                    end_call_recieved1 = 1;
+                    station1_busy = 0;
+                    station1_calling = 0;
+                    station1_calltrgt = 0;
+                    station1_rcall = 0;
+                    GREEN_LED = 0;
+                    LISTEN_NONE();
+                    end_call_recieved1 = 1;
+                }
             }
             last_state_hang_btn = current_state_hang_btn;
             if (current_state_radio_btn1 == 0 && last_state_radio_btn1 == 1) {
-                /* Radio Button 1 Function */
+                if (!station1_busy){
+                    if (radio_on) {
+                        radio_on = 0;
+                        Set_Radio(0);
+                        LISTEN_NONE();
+                        selected_radio_station = 0;
+                        selected_mode = 0;
+                    }
+                    else if (!radio_on) {
+                        radio_on = 1;
+                        Set_Radio(1);
+                        LISTEN_RADIO();
+                        selected_radio_station = 1;
+                    }
+                }
             }
             last_state_radio_btn1 = current_state_radio_btn1;
             if (current_state_radio_btn2 == 0 && last_state_radio_btn2 == 1) {
-                /* Radio Button 2 Function */
+                if (radio_on) {
+                    selected_mode = !selected_mode; /* Currently scrolling Radio/Stations */
+                }
             }
             last_state_radio_btn2 = current_state_radio_btn2;
+
+            /*        // Local Checker //               */
         }
-        if ((timer - y) >= 50){
+        if ((unsigned char)(timer - y) >= 50){
             y = timer;
             Poller();
         }
