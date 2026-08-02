@@ -67,6 +67,7 @@ void LISTEN_RADIO(void);
 void LISTEN_NONE(void);
 void calldisplay(void);
 void endcall(void);
+void incoming(void);
 
 volatile unsigned char timer = 0;
 volatile unsigned char poll = 0x00;
@@ -76,6 +77,8 @@ volatile unsigned char recieved_message = 0;
 bit Is_Speaker_On = 1;
 bit selected_mode = 0;
 bit Is_Display_Busy = 0;
+bit incoming_call = 0;
+bit buzzer_flag = 0;
 unsigned char selected_radio_station = 0;
 unsigned char Busy_Display_Clock = 0;
 
@@ -118,6 +121,7 @@ bit station3_decline = 0;
 bit station4_decline = 0;
 
 bit station1_trgtbusy = 0;
+bit station1_accept = 0;
 bit station2_accept = 0;
 bit station3_accept = 0;
 bit station4_accept = 0;
@@ -746,6 +750,18 @@ void calldisplay(void){
         LCD_Sentence("CAL3");
     }
 }
+void callpending(void){
+    cursor(2, 1);
+    if (selected_station == 2){
+        LCD_Sentence("C1..");
+    }
+    else if (selected_station == 3){
+        LCD_Sentence("C2..");
+    }
+    else if (selected_station == 4){
+        LCD_Sentence("C3..");
+    } 
+}
 void endcall(void){
     LISTEN_NONE();
     cursor(2, 1);
@@ -753,10 +769,30 @@ void endcall(void){
     Busy_Display_Clock = timer;
     Is_Display_Busy = 1;
 }
+void incoming(void){
+    incoming_call = 1;
+    buzzer_flag = 1;
+    YELLOW_LED = 1;
+    LISTEN_NONE();
+    if (selected_station == 2){
+        cursor(2, 1);
+        LCD_Sentence("IN1?");
+    }
+    else if (selected_station == 3){
+        cursor(2, 1);
+        LCD_Sentence("IN2?");
+    }
+    else if (selected_station == 4){
+        cursor(2, 1);
+        LCD_Sentence("IN3?");
+    }
+}
 void main(void)
 {
     unsigned char x = 0;
     unsigned char y = 0;
+    unsigned char busy_display_clock = 0;
+    unsigned char buzzer_clock = 0;
     bit last_state_scroll_btn = 1;
     bit last_state_call_btn = 1;
     bit last_state_hang_btn = 1;
@@ -788,6 +824,15 @@ void main(void)
             else if (SPK_SWITCH_STATUS == 1) {
                 ORANGE_LED = 0;
                 Is_Speaker_On = 0;
+            }
+            if (buzzer_flag){
+                if ((unsigned char)(timer - buzzer_clock) >= 300){
+                    buzzer_clock = timer; 
+                    BUZZER = !BUZZER;
+                }
+            }
+            else if (!buzzer_flag){
+                BUZZER = 0;
             }
             if (Is_Display_Busy){
                 if ((unsigned char)(timer - busy_display_clock) >= 75){
@@ -879,6 +924,45 @@ void main(void)
                     }
                 }
             }
+            if (station2_calltrgt == 1 && station2_rcall && !station1_busy){
+                selected_station = 2;
+                incoming();
+                station1_busy = 1;
+            }
+            else if (station3_calltrgt == 1 && station3_rcall && !station1_busy){
+                selected_station = 3;
+                incoming();
+                station1_busy = 1;
+            }
+            else if (station4_calltrgt == 1 && station4_rcall && !station1_busy){
+                selected_station = 4;
+                incoming();
+                station1_busy = 1;
+            }
+                /* If all stations call station 1 
+                (or station x later when I copy this to
+                 the other statios local code) 
+                 Priority is 1>2>3>4 */
+                 
+            if (send_accept_station1){
+                send_accept_station1 = 0;
+                station1_rcall = 0;
+                station1_calling = station1_calltrgt;
+                station1_busy = 1;
+                GREEN_LED = 1;
+                if (station1_calltrgt == 2){
+                    LISTEN_STATION2();
+                    calldisplay();
+                }
+                else if (station1_calltrgt == 3){
+                    LISTEN_STATION3();
+                    calldisplay();
+                }
+                else if (station1_calltrgt == 4){
+                    LISTEN_STATION4();
+                    calldisplay();
+                }
+            }
             if (current_state_scroll_btn == 0 && last_state_scroll_btn == 1) {
                 if (selected_mode == 0) {
                     if (selected_station == 0){
@@ -917,11 +1001,22 @@ void main(void)
             }
             last_state_scroll_btn = current_state_scroll_btn;
             if (current_state_call_btn == 0 && last_state_call_btn == 1) {
-                if (!station1_busy){
+                if ((station2_calltrgt == 1 && station2_rcall) || 
+                    (station3_calltrgt == 1 && station3_rcall) || 
+                    (station4_calltrgt == 1 && station4_rcall)){
+                        station1_calling = selected_station;
+                        station1_busy = 1;
+                        GREEN_LED = 1;
+                        station1_accept = 1;
+                        buzzer_flag = 0;
+                        YELLOW_LED = 0;
+                        /*The rest of the incomin call accept protocol*/
+                    }
+                else if (!station1_busy){
                     station1_rcall = 1;
                     station1_calltrgt = selected_station;
                     YELLOW_LED = 1;
-                    calldisplay();
+                    callpending();
                 }
             }
             last_state_call_btn = current_state_call_btn;
