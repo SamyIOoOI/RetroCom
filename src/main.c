@@ -995,9 +995,9 @@ void main(void)
                 (or station x later when I copy this to
                  the other statios local code) 
                  Priority is 1>2>3>4 */
-            if ((station2_calltrgt == 1 && station2_rcall) ||
+            if (((station2_calltrgt == 1 && station2_rcall) ||
              (station3_calltrgt == 1 && station3_rcall) ||
-             (station4_calltrgt == 1 && station4_rcall) 
+             (station4_calltrgt == 1 && station4_rcall)) 
              && station1_accept){
                 if (who_main_wants == 2){
                     station1_calling = 2;
