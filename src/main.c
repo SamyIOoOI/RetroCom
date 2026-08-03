@@ -782,25 +782,25 @@ void calldisplay(void){
     cursor(2, 1);
     GREEN_LED = 1;
     if (selected_station == 2){
-        LCD_Sentence("CAL1");
-    }
-    else if (selected_station == 3){
         LCD_Sentence("CAL2");
     }
-    else if (selected_station == 4){
+    else if (selected_station == 3){
         LCD_Sentence("CAL3");
+    }
+    else if (selected_station == 4){
+        LCD_Sentence("CAL4");
     }
 }
 void callpending(void){
     cursor(2, 1);
     if (selected_station == 2){
-        LCD_Sentence("C1..");
-    }
-    else if (selected_station == 3){
         LCD_Sentence("C2..");
     }
-    else if (selected_station == 4){
+    else if (selected_station == 3){
         LCD_Sentence("C3..");
+    }
+    else if (selected_station == 4){
+        LCD_Sentence("C4..");
     } 
 }
 void endcall(void){
@@ -822,15 +822,15 @@ void incoming(void){
     LISTEN_NONE();
     if (selected_station == 2){
         cursor(2, 1);
-        LCD_Sentence("IN1?");
+        LCD_Sentence("IN2?");
     }
     else if (selected_station == 3){
         cursor(2, 1);
-        LCD_Sentence("IN2?");
+        LCD_Sentence("IN3?");
     }
     else if (selected_station == 4){
         cursor(2, 1);
-        LCD_Sentence("IN3?");
+        LCD_Sentence("IN4?");
     }
 }
 void main(void)
