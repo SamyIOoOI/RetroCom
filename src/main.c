@@ -5,29 +5,30 @@
 
 #include <reg52.h>
 #include <stdio.h>
-#include <intrins.h>
+/* #include <intrins.h> */
+#define _nop_() __asm__("nop")
 
-sbit CDBUS1 = P1^0;
-sbit CDBUS2 = P1^1;
-sbit CDBUS3 = P1^2;
-sbit CALL_BTN = P1^3;
-sbit HANG_BTN = P1^4;
-sbit SCROLL_BTN = P1^5;
-sbit RADIO_BTN1 = P1^6;
-sbit RADIO_BTN2 = P3^4;
-sbit BUZZER = P1^7;
-sbit YELLOW_LED = P2^0;
-sbit GREEN_LED = P2^1;
-sbit SDA_DISPLAY = P2^2;
-sbit SCL_DISPLAY = P2^3;
-sbit RADIO_SCLK = P2^4;
-sbit RADIO_SDIO = P2^5;
-sbit SPK_SWITCH_STATUS = P2^6;
-sbit ORANGE_LED = P2^7;
-sbit RX_PIN = P3^0;
-sbit TX_PIN = P3^1;
-sbit ST_CD_A = P3^2;
-sbit ST_CD_B = P3^3;
+__sbit __at (0x90) CDBUS1; 
+__sbit __at (0x91) CDBUS2;
+__sbit __at (0x92) CDBUS3;
+__sbit __at (0x93) CALL_BTN;
+__sbit __at (0x94) HANG_BTN;
+__sbit __at (0x95) SCROLL_BTN;
+__sbit __at (0x96) RADIO_BTN1;
+__sbit __at (0xB4) RADIO_BTN2;
+__sbit __at (0x97) BUZZER;
+__sbit __at (0xA0) YELLOW_LED;
+__sbit __at (0xA1) GREEN_LED;
+__sbit __at (0xA2) SDA_DISPLAY;
+__sbit __at (0xA3) SCL_DISPLAY;
+__sbit __at (0xA4) RADIO_SCLK;
+__sbit __at (0xA5) RADIO_SDIO;
+__sbit __at (0xA6) SPK_SWITCH_STATUS;
+__sbit __at (0xA7) ORANGE_LED;
+__sbit __at (0xB0) RX_PIN;
+__sbit __at (0xB1) TX_PIN;
+__sbit __at (0xB2) ST_CD_A;
+__sbit __at (0xB3) ST_CD_B;
 
 
 
@@ -55,7 +56,7 @@ void select_station_poll(unsigned char station);
 void Poller(void);
 void unpacker(void);
 void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char trgt_busy);
-void UART_Send(unsigned char data);
+void UART_Send(unsigned char dot2);
 unsigned char UART_Read(unsigned char timeout_limit);
 void Init_UART(void);
 void Init_System(void);
@@ -590,8 +591,8 @@ void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char
         ((decline & 0x01) << 6) | 
         ((accept & 0x01) << 7);
 }
-void UART_Send(unsigned char data){
-    SBUF = data;
+void UART_Send(unsigned char dot2){
+    SBUF = dot2;
     while (!TI);
     TI = 0;
 }

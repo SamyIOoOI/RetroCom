@@ -5,23 +5,24 @@
 
 #include <reg52.h>
 #include <stdio.h>
-#include <intrins.h>
+/* #include <intrins.h> */
+#define _nop_() __asm__("nop")
 
-sbit CDBUS1 = P1^0;
-sbit CDBUS2 = P1^1;
-sbit CDBUS3 = P1^2;
-sbit CALL_BTN = P1^3;
-sbit HANG_BTN = P1^4;
-sbit SCROLL_BTN = P1^5;
-sbit BUZZER = P1^7;
-sbit YELLOW_LED = P2^0;
-sbit GREEN_LED = P2^1;
-sbit SDA_DISPLAY = P2^2;
-sbit SCL_DISPLAY = P2^3;
-sbit SPK_SWITCH_STATUS = P2^6;
-sbit ORANGE_LED = P2^7;
-sbit RX_PIN = P3^0;
-sbit TX_PIN = P3^1;
+__sbit __at (0x90) CDBUS1; 
+__sbit __at (0x91) CDBUS2;
+__sbit __at (0x92) CDBUS3;
+__sbit __at (0x93) CALL_BTN;
+__sbit __at (0x94) HANG_BTN;
+__sbit __at (0x95) SCROLL_BTN;
+__sbit __at (0x97) BUZZER;
+__sbit __at (0xA0) YELLOW_LED;
+__sbit __at (0xA1) GREEN_LED;
+__sbit __at (0xA2) SDA_DISPLAY;
+__sbit __at (0xA3) SCL_DISPLAY;
+__sbit __at (0xA6) SPK_SWITCH_STATUS;
+__sbit __at (0xA7) ORANGE_LED;
+__sbit __at (0xB0) RX_PIN;
+__sbit __at (0xB1) TX_PIN;
 
 #define I2C_DISPLAY_ADDR 0x4E /*I gotta change this based on my I2C Address*/
 
@@ -39,7 +40,7 @@ void Side_Packer(void);
 void Listen_Master(void);
 void unpacker(void);
 void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char end_call, unsigned char busy, unsigned char decline, unsigned char trgt_busy);
-void UART_Send(unsigned char data);
+void UART_Send(unsigned char dot);
 unsigned char UART_Read(unsigned char timeout_limit);
 void Init_UART(void);
 void Init_System(void);
@@ -97,13 +98,18 @@ bit station1_rcall = 0;
 bit station2_rcall = 0;
 bit station2_busy = 0;
 
+void LCD_STOP(void){
+    SDA_DISPLAY = 0; I2C_Delay();
+    SCL_DISPLAY = 1; I2C_Delay();
+    SDA_DISPLAY = 1; I2C_Delay();
+}
 void LCD_Nibble(unsigned char nibble, unsigned char iscontrol) {
-    unsigned char data_value = (nibble & 0x0F) | (iscontrol ? 0x01 : 0x00) | 0x08;
+    unsigned char dot_value = (nibble & 0x0F) | (iscontrol ? 0x01 : 0x00) | 0x08;
     LCD_START();
     LCD_Write(I2C_DISPLAY_ADDR);
-    LCD_Write(data_value | 0x04);
+    LCD_Write(dot_value | 0x04);
     I2C_Delay();
-    LCD_Write(data_value & ~0x04);
+    LCD_Write(dot_value & ~0x04);
     LCD_STOP();
 }
 void LCD_Send(unsigned char value, unsigned char iscontrol) {
@@ -218,8 +224,8 @@ void pack_poll_byte(unsigned char call, unsigned char call_target, unsigned char
         ((decline & 0x01) << 6) | 
         ((accept & 0x01) << 7);
 }
-void UART_Send(unsigned char data){
-    SBUF = data;
+void UART_Send(unsigned char dot){
+    SBUF = dot;
     while (!TI);
     TI = 0;
 }

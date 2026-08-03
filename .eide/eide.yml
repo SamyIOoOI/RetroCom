@@ -20,11 +20,29 @@ targets:
       incList:
         - inc
       libList: []
-    excludeList: []
+    excludeList:
+      - src/Station3.c
+      - src/Station4.c
+      - src/maintemp.c
     settings:
       debugger: unknown
     toolchain: SDCC
     toolchainConfigMap:
+      Keil_C51:
+        options:
+          version: 2
+          afterBuildTasks: []
+          asm-compiler: {}
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            optimization-level: level-8
+            optimization-type: SPEED
+          global:
+            ram-mode: SMALL
+            rom-mode: LARGE
+          linker:
+            output-format: elf
+            remove-unused: true
       SDCC:
         options:
           version: 3
