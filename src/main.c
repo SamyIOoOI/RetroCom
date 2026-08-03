@@ -32,7 +32,7 @@ sbit ST_CD_B = P3^3;
 
 
 #define I2C_DISPLAY_ADDR 0x4E /*I gotta change this based on my I2C Address*/
-#define I2C_RADIO_ADDR 0x40 /*I gotta change this based on my I2C Address*/
+#define I2C_RADIO_ADDR 0x20 /*I gotta change this based on my I2C Address*/
 
 
 void I2C_Delay(void);
