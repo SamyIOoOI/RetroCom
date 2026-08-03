@@ -552,7 +552,7 @@ void unpacker(void){
     if (currently_polling == 2){
         station2_on = (recieved_message & 0x01);
         station2_rcall = (recieved_message >> 1) & 0x01;
-        station2_calltrgt = ((recieved_message >> 2) & 0x03) + 1;
+        station2_calltrgt = (((recieved_message >> 2) & 0x03) + 1);
         end_call_recieved2 = (recieved_message >> 4) & 0x01;
         station2_busy = (recieved_message >> 5) & 0x01;
         station2_decline = (recieved_message >> 6) & 0x01;
@@ -561,7 +561,7 @@ void unpacker(void){
     if (currently_polling == 3){
         station3_on = (recieved_message & 0x01);
         station3_rcall = (recieved_message >> 1) & 0x01;
-        station3_calltrgt = ((recieved_message >> 2) & 0x03) + 1;
+        station3_calltrgt = (((recieved_message >> 2) & 0x03) + 1);
         end_call_recieved3 = (recieved_message >> 4) & 0x01;
         station3_busy = (recieved_message >> 5) & 0x01;
         station3_decline = (recieved_message >> 6) & 0x01;
@@ -570,7 +570,7 @@ void unpacker(void){
     if (currently_polling == 4){
         station4_on = (recieved_message & 0x01);
         station4_rcall = (recieved_message >> 1) & 0x01;
-        station4_calltrgt = ((recieved_message >> 2) & 0x03) + 1;
+        station4_calltrgt = (((recieved_message >> 2) & 0x03) + 1);
         end_call_recieved4 = (recieved_message >> 4) & 0x01;
         station4_busy = (recieved_message >> 5) & 0x01;
         station4_decline = (recieved_message >> 6) & 0x01;
@@ -873,8 +873,8 @@ void main(void)
                 Is_Speaker_On = 0;
             }
             if (buzzer_flag){
-                if ((unsigned char)(timer - buzzer_clock) >= 300){
-                    buzzer_clock = timer; 
+                if ((unsigned char)(seconds - buzzer_clock) >= 1){
+                    buzzer_clock = seconds; 
                     BUZZER = !BUZZER;
                 }
             }

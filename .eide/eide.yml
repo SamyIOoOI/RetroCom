@@ -24,6 +24,7 @@ targets:
       - src/Station3.c
       - src/Station4.c
       - src/maintemp.c
+      - src/Station2.c
     settings:
       debugger: unknown
     toolchain: SDCC
