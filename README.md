@@ -95,3 +95,19 @@ The design can be accessed via Fusion Share link on your browser through the [li
 ---------------------------------
 
 ## Bill of Materials
+
+
+---------------------------------
+## Credits
+
+[Kicad](https://www.kicad.org/) : Schematic & PCB designs
+
+[Autodesk Fusion](https://www.autodesk.com/ae/products/fusion-360/overview) : 3D Case Design
+
+[Visual Studio Code](https://code.visualstudio.com/) : Logic Code Design
+
+[Embedded IDE For VSCode](https://em-ide.com/en/) : Compiling C files into .hex format
+
+## Licence
+
+Made by SamyIOoOI on github under the GPL-3.0 Licence.
