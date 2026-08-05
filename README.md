@@ -48,7 +48,7 @@
 
 -----------------------------------
 
-## PCB & Schematic Designs.
+## PCB & Schematic Designs
 
 The PCB & Schematics were designed in KiCad with a focus on order & accessibility in the case of hand soldering. The RDA5807M [Main Station] is the only SMD Component.``
 
@@ -88,9 +88,9 @@ The case design was made in fusion with simplicity & practicality in mind.
 
 <img src="Graphics\RetroCom Case.png">
 
-21 x 13 x 5 (cm) are the dimensions of the Case.
-
 The design can be accessed via Fusion Share link on your browser through the [link](https://gmail6713823.autodesk360.com/g/shares/SH28cd1QT2badd0ea72b43d7afa1819b979d) provided.
+
+21 x 13 x 5 (cm) are the dimensions of the Case.
 
 ---------------------------------
 
