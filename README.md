@@ -108,6 +108,8 @@ The design can be accessed via Fusion Share link on your browser through the [li
 
 [Embedded IDE For VSCode](https://em-ide.com/en/) : Compiling C files into .hex format
 
+[Notaroomba Cyberboard](https://github.com/notaroomba/cyberboard#key-features) : Inspired readme format
+
 ## Licence
 
 Made by SamyIOoOI on github under the GPL-3.0 Licence.
