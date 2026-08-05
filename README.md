@@ -1,4 +1,4 @@
-<h1 style="text-align: center;">RetroCom</h1>
+<h1 align="center">RetroCom</h1>
 
 <img src="Graphics\RetroCom Banner.gif" alt="RetroCom Banner">
 
@@ -6,6 +6,9 @@
 --------------------------
 ---------------------------------
 ## A multiple channel one-to-one (Simultaneous Speech) two-way INTERCOM built around the AT89C52-PI24 MCU (8052 Core).
+
+
+### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]]()</p>
 
 <p align="center">
 <img src="Graphics\Small Fusion Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small 8052 Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small KiCad Banner.png">
