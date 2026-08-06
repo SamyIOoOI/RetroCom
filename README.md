@@ -99,7 +99,7 @@ The design can be accessed via Fusion Share link on your browser through the [li
 
 1- Flashing the code (.hex) files into the AT89S52 Chip.
 
-- Place the AT89 on a breadboard & build the  crystal and reset circuits. Refer to the [schematic](KiCad_PCB_Source\RetroCom.kicad_sch) for details. Look for labels "**CRYS**" & "**RST**".
+- Place the AT89 on a breadboard & build the  crystal and reset circuits. Refer to the [Schematic](Graphics/Schematic%20Station%202.png) for details. Look for labels "**CRYS**" & "**RST**".
 - Connect the ISP lines MOSI, MISO, SCK, RESET & GND. EA pin must be connected to VCC. Do not power the circuit before completion.
 - Power the circuit through either: A- External 5V Supply B- USBasp's 5V Pinout.
 - Use ProgISP to flash the chip. Select AT89S52 from the drop-down menu.
