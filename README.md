@@ -97,14 +97,28 @@ The design can be accessed via Fusion Share link on your browser through the [li
 
 ## = Assembly Instructions =
 
-1- Flashing the code (.hex) files into the AT89S52 Chip.
+1- Connecting the PCB & Case
+
+- In the case of **hand-solder** follow the schematic's connections and use the PCB Design as a reference.
+- Use **DIP Sockets** for the ICs (RDA5807M is an exception as it is SMD).
+- Connect the ICs & flashed AT89S52s to their respective hand-soldered/printed PCBs.
+- Connect the buzzer, speaker, microphone, LEDs, toggle switches, momentary switches & I2C Display through via jumper cables from their respective headers.
+- For power, connect half a female jumper wire to the screw terminals of a female DC Socket to wire terminals connector. This can be connected to a **12VDC** 3 & above Amp Wall Adapter.
+- Solder the RJ45 Houses in their locations, run CAT6 Cables from each sub-station to main station. 
+- For the case, if using the printed design, connect the board to its respective mounting holes via M3 Screws [8mm - 10mm]. 
+- Each printed case design has eight board mounting holes to suit both board sizes (Side Stations & Main Station).
+- Place the interface components on the surface panel of the case, run jumper cables to the board below. Use the four corner bound M3 screw holes for holding the panel on the bottom case piece. Run the outgoing cables through the back panel.
+
+2- Flashing the code (.hex) files into the AT89S52 Chip.
 
 - Place the AT89 on a breadboard & build the  crystal and reset circuits. Refer to the [Schematic](Graphics/Schematic%20Station%202.png) for details. Look for labels "**CRYS**" & "**RST**".
+- Plug the USBasp into you pc/laptop USB port & select it in Zadig's drop-down menu. Install libusb-win32 or libusbK.
 - Connect the ISP lines MOSI, MISO, SCK, RESET & GND. EA pin must be connected to VCC. Do not power the circuit before completion.
 - Power the circuit through either: A- External 5V Supply B- USBasp's 5V Pinout.
 - Use ProgISP to flash the chip. Select AT89S52 from the drop-down menu.
 
 **[ProgISP](https://www.phippselectronics.com/support/prog-isp-software/) Software & [Zadig](https://zadig.akeo.ie/#) Drivers Installer are required to flash the chips.**
+
 
 ## Bill of Materials
 
