@@ -8,7 +8,7 @@
 ## A multiple channel one-to-one (Simultaneous Speech) two-way INTERCOM built around the AT89C52-PI24 MCU // AT89S52-PU24 (8052 Core) with an Embedded FM Radio Model.
 
 
-### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]]()</p>
+### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Assembly Instructions](#-assembly-instructions-) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]]()</p>
 
 <p align="center">
 <img src="Graphics\Small Fusion Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small 8052 Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small KiCad Banner.png">
@@ -93,11 +93,22 @@ The design can be accessed via Fusion Share link on your browser through the [li
 21 x 13 x 5 (cm) are the dimensions of the Case.
 
 ---------------------------------
+-----------------------------
+
+## = Assembly Instructions =
+
+1- Flashing the code (.hex) files into the AT89S52 Chip.
+
+- Place the AT89 on a breadboard & build the  crystal and reset circuits. Refer to the [schematic](KiCad_PCB_Source\RetroCom.kicad_sch) for details. Look for labels "**CRYS**" & "**RST**".
+- Connect the ISP lines MOSI, MISO, SCK, RESET & GND. EA pin must be connected to VCC. Do not power the circuit before completion.
+- Power the circuit through either: A- External 5V Supply B- USBasp's 5V Pinout.
+- Use ProgISP to flash the chip. Select AT89S52 from the drop-down menu.
+
+**[ProgISP](https://www.phippselectronics.com/support/prog-isp-software/) Software & [Zadig](https://zadig.akeo.ie/#) Drivers Installer are required to flash the chips.**
 
 ## Bill of Materials
 
 
----------------------------------
 ## Credits
 
 [Kicad](https://www.kicad.org/) : Schematic & PCB designs
