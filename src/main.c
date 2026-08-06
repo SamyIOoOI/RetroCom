@@ -85,8 +85,9 @@ unsigned char selected_radio_station = 0;
 unsigned char Busy_Display_Clock = 0;
 unsigned char who_main_wants = 0;
 unsigned char ring_start_time = 0;
-unsigned char seconds = 0;
+volatile unsigned char seconds = 0;
 volatile unsigned int ms_time = 0;
+unsigned char buzzer_clock = 0;
 
 /* Master Station Section (The state of all stations is stored here) */
 
@@ -644,8 +645,10 @@ void Init_System(void){
     SPK_SWITCH_STATUS = 1;
     RX_PIN = 1;
     TX_PIN = 1;
-    GREEN_LED = 0;
-    YELLOW_LED = 0;
+    GREEN_LED = 1;
+    YELLOW_LED = 1;
+    BUZZER = 1;
+    ORANGE_LED = 1;
     CDBUS1 = 0;
     CDBUS2 = 0;
     CDBUS3 = 0;
@@ -697,7 +700,7 @@ void Radio_Start(void){
     RADIO_SCLK = 0; I2C_Delay();
 }
 void LCD_STOP(void){
-    SDA_DISPLAY = 0; I2C_Delay();
+    SCL_DISPLAY = 0; SDA_DISPLAY = 0; I2C_Delay();
     SCL_DISPLAY = 1; I2C_Delay();
     SDA_DISPLAY = 1; I2C_Delay();
 }
@@ -781,7 +784,7 @@ void Init_Display(void){
 }
 void calldisplay(void){
     cursor(2, 1);
-    GREEN_LED = 1;
+    GREEN_LED = 0;
     if (selected_station == 2){
         LCD_Sentence("CAL2");
     }
@@ -820,6 +823,8 @@ void incoming(void){
     buzzer_flag = 1;
     YELLOW_LED = 1;
     ring_start_time = seconds;
+    buzzer_clock = seconds - 1;
+    BUZZER = 1;
     LISTEN_NONE();
     if (selected_station == 2){
         cursor(2, 1);
@@ -839,7 +844,6 @@ void main(void)
     unsigned char x = 0;
     unsigned char y = 0;
     unsigned char busy_display_clock = 0;
-    unsigned char buzzer_clock = 0;
     bit last_state_scroll_btn = 1;
     bit last_state_call_btn = 1;
     bit last_state_hang_btn = 1;
@@ -865,11 +869,11 @@ void main(void)
             current_state_radio_btn1 = RADIO_BTN1;
             current_state_radio_btn2 = RADIO_BTN2;
             if (SPK_SWITCH_STATUS == 0) {
-                ORANGE_LED = 1;
+                ORANGE_LED = 0;
                 Is_Speaker_On = 1;
             }
             else if (SPK_SWITCH_STATUS == 1) {
-                ORANGE_LED = 0;
+                ORANGE_LED = 1;
                 Is_Speaker_On = 0;
             }
             if (buzzer_flag){
@@ -879,7 +883,7 @@ void main(void)
                 }
             }
             else if (!buzzer_flag){
-                BUZZER = 0;
+                BUZZER = 1;
             }
             if (Is_Display_Busy){
                 if ((unsigned char)(timer - busy_display_clock) >= 75){
@@ -893,7 +897,7 @@ void main(void)
             (station1_calling == 3 && station3_calling == 1) || 
             (station1_calling == 4 && station4_calling == 1)){
                 station1_busy = 1;
-                YELLOW_LED = 0;
+                YELLOW_LED = 1;
             }
             if (station1_calltrgt) {
                 if (station1_calltrgt == 2){
@@ -902,15 +906,15 @@ void main(void)
                         station2_calling = 1;
                         station1_busy = 1;
                         station1_calltrgt = 0;
-                        YELLOW_LED = 0;
-                        GREEN_LED = 1;
+                        YELLOW_LED = 1;
+                        GREEN_LED = 0;
                         LISTEN_STATION2();
                         calldisplay();
                     }
                     else if (station2_decline){
                         station1_calltrgt = 0;
                         station2_decline = 0;
-                        YELLOW_LED = 0;
+                        YELLOW_LED = 1;
                         endcall();
                     }
                 }
@@ -920,15 +924,15 @@ void main(void)
                         station3_calling = 1;
                         station1_busy = 1;
                         station1_calltrgt = 0;
-                        YELLOW_LED = 0;
-                        GREEN_LED = 1;
+                        YELLOW_LED = 1;
+                        GREEN_LED = 0;
                         LISTEN_STATION3();
                         calldisplay();
                     }
                     else if (station3_decline){
                         station1_calltrgt = 0;
                         station3_decline = 0;
-                        YELLOW_LED = 0;
+                        YELLOW_LED = 1;
                         endcall();
                     }
                 }
@@ -938,15 +942,15 @@ void main(void)
                         station4_calling = 1;
                         station1_busy = 1;
                         station1_calltrgt = 0;
-                        YELLOW_LED = 0;
-                        GREEN_LED = 1;
+                        YELLOW_LED = 1;
+                        GREEN_LED = 0;
                         LISTEN_STATION4();
                         calldisplay();
                     }
                     else if (station4_decline){
                         station1_calltrgt = 0;
                         station4_decline = 0;
-                        YELLOW_LED = 0;
+                        YELLOW_LED = 1;
                         endcall();
                     }
                 }
@@ -1029,7 +1033,7 @@ void main(void)
                 send_accept_station1 = 0;
                 station1_rcall = 0;
                 station1_calling = station1_calltrgt;
-                GREEN_LED = 1;
+                GREEN_LED = 0;
                 if (station1_calltrgt == 2){
                     LISTEN_STATION2();
                     calldisplay();
@@ -1047,7 +1051,7 @@ void main(void)
                 if ((unsigned char)(seconds - ring_start_time) >= 45){
                     station1_rcall = 0;
                     station1_calltrgt = 0;
-                    YELLOW_LED = 0;
+                    YELLOW_LED = 1;
                     endcall();
                 }
             }
@@ -1055,7 +1059,7 @@ void main(void)
                 if ((unsigned char)(seconds - ring_start_time) >= 45){
                     incoming_call = 0;
                     buzzer_flag = 0;
-                    YELLOW_LED = 0;
+                    YELLOW_LED = 1;
                     endcall();
                 }
             }
@@ -1100,10 +1104,10 @@ void main(void)
                 if (incoming_call){
                         station1_calling = selected_station;
                         who_main_wants = selected_station; /*:wolf:*/
-                        GREEN_LED = 1;
+                        GREEN_LED = 0;
                         station1_accept = 1;
                         buzzer_flag = 0;
-                        YELLOW_LED = 0;
+                        YELLOW_LED = 1;
                         calldisplay();
                         if (who_main_wants == 2){
                             LISTEN_STATION2();
@@ -1118,7 +1122,7 @@ void main(void)
                 else if (!station1_busy && !incoming_call && !outgoing_call){
                     station1_rcall = 1;
                     station1_calltrgt = selected_station;
-                    YELLOW_LED = 1;
+                    YELLOW_LED = 0;
                     outgoing_call = 1;
                     ring_start_time = seconds;
                     callpending();
@@ -1132,7 +1136,7 @@ void main(void)
                     station1_calling = 0;
                     station1_calltrgt = 0;
                     station1_rcall = 0;
-                    GREEN_LED = 0;
+                    GREEN_LED = 1;
                     incoming_call = 0;
                     station1_accept = 0;
                     LISTEN_NONE();
@@ -1145,8 +1149,8 @@ void main(void)
                     station1_calling = 0;
                     station1_calltrgt = 0;
                     station1_rcall = 0;
-                    GREEN_LED = 0;
-                    YELLOW_LED = 0;
+                    GREEN_LED = 1;
+                    YELLOW_LED = 1;
                     incoming_call = 0;
                     station1_accept = 0;    
                     endcall();
