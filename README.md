@@ -99,7 +99,7 @@ The design can be accessed via Fusion Share link on your browser through the [li
 
 1- Connecting the PCB & Case
 
-- In the case of **hand-solder** follow the schematic's connections and use the PCB Design as a reference.
+- In the case of **hand-solder** follow the schematic's connections and use the [PCB](Graphics/PCB%20Station%201.png) Design as a reference.
 - Use **DIP Sockets** for the ICs (RDA5807M is an exception as it is SMD).
 - Connect the ICs & flashed AT89S52s to their respective hand-soldered/printed PCBs.
 - Connect the buzzer, speaker, microphone, LEDs, toggle switches, momentary switches & I2C Display through via jumper cables from their respective headers.
