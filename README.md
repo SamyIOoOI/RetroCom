@@ -5,7 +5,7 @@
 
 --------------------------
 ---------------------------------
-## A multiple channel one-to-one (Simultaneous Speech) two-way INTERCOM built around the AT89C52-PI24 MCU (8052 Core).
+## A multiple channel one-to-one (Simultaneous Speech) two-way INTERCOM built around the AT89C52-PI24 MCU (8052 Core) with an Embedded FM Radio Model.
 
 
 ### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]]()</p>
