@@ -8,7 +8,7 @@
 ## A multiple channel one-to-one (Simultaneous Speech) two-way INTERCOM built around the AT89C52-PI24 MCU // AT89S52-PU24 (8052 Core) with an Embedded FM Radio Model.
 
 
-### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Assembly Instructions](#-assembly-instructions-) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]](BOM/BOM.csv) **-** [BOM[XLSX]](BOM/BOM%20EXCEL.xlsx)</p>
+### <p align="center">[Main Features](#main-features) **-** [Variations](#variations) **-** [PCB & Schematic](#pcb--schematic-designs) **-** [Assembly Instructions](#-assembly-instructions-) **-** [Case](#case-design) **-** [BOM [Table]](#bill-of-materials) **-** [BOM [CSV]](BOM/BOM.csv) **-** [Gerber Files](/Gerber%20Files/) **-** [BOM[XLSX]](BOM/BOM%20EXCEL.xlsx)</p>
 
 <p align="center">
 <img src="Graphics\Small Fusion Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small 8052 Banner.png">&nbsp;&nbsp;&nbsp;&nbsp;<img src="Graphics\Small KiCad Banner.png">
